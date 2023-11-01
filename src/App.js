@@ -1,25 +1,54 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import { Signin } from "./logins/signin";
+import { Signup } from "./logins/signup";
+import { BrowserRouter as Router,Routes,Route,Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./config";
+import {Main} from "./pages/main"
+import { Profile } from "./components/profile";
+import { AppProvider, useAppContext  } from "./appContext";
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const ok = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log(user.displayName);
+        console.log(user.uid);
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    });
+    return () => {
+      ok();
+    };
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Router>
+      <AppProvider>
+        <Routes>
+          {user ? (
+            <>
+              <Route path="/main" element={<Main />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/" element={<Navigate to="/main" />} />
+            </>
+          ) : (
+            <>
+              <Route path="/" element={<Signin />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </>
+          )}
+        </Routes>
+        </AppProvider>
+      </Router>
     </div>
   );
 }
-
 export default App;
